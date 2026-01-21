@@ -246,8 +246,6 @@
             <select class='form-select' id='microphone-select'>
             </select>
             <label class='input-group-text' for='microphone-select'>Microphone</label>
-            <input type='checkbox' class='form-check-input' id='denoise-checkbox'>
-            <label class='form-check-label' for='denoise-checkbox'>AI denoise</label>
           </div>
         </div>
         <p style='font-size: 14px'>
@@ -255,6 +253,18 @@
             the room.</span>
           <span class='zh-cn'>PS: 进房之前请确认当前页面允许使用摄像头和麦克风</span>
         </p>
+        <h1 style='font-size: 14px'>
+          <span class='en'>Device</span>
+          <span class='zh-cn'>配置</span>
+        </h1>
+        <div class="wrapper">
+            <input type='checkbox' class='form-check-input' id='denoise-checkbox'>
+            <label class='form-check-label' for='denoise-checkbox'>AI denoise</label>
+            <select class='form-select' id='denoise-mode-select'>
+              <option value='0'>默认模式</option>
+              <option value='1'>远场模式</option>
+            </select>
+        </div>
         <h1 style='font-size: 14px'>
           <span class='en'>Operation</span>
           <span class='zh-cn'>操作</span>

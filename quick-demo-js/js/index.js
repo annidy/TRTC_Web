@@ -14,7 +14,7 @@ window.isIframe = window.self !== window.top;
 let sdkAppId;
 let sdkSecretKey;
 let strRoomId;
-let trtc = TRTC.create({ assertsPath: 'assets/' })
+let trtc = TRTC.create({ assetsPath: 'assets/' })
 
 let userId;
 let shareUserId;
@@ -90,9 +90,8 @@ async function enterRoom() {
 	if (window.isIframe) initDevice();
 	initParams()
 	setButtonLoading('enter', true);
-	let userSig
 	try {
-		userSig  = genTestUserSig({ sdkAppId, userId, sdkSecretKey }).userSig;
+		const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
 		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig })
 		reportSuccessEvent('enterRoom', sdkAppId)
 		refreshLink()
@@ -106,20 +105,14 @@ async function enterRoom() {
 		reportFailedEvent({
 			name: 'enterRoom',
 			sdkAppId,
-			roomId,
+			strRoomId,
 			error
 		})
 		addFailedLog(`[${userId}] enterRoom failed.`);
 	}
 
-	startLocalVideo();
-	startLocalAudio();
-	if (denoiseEl.checked) {
-		console.log('enable denoise');
-		await trtc.startPlugin('AIDenoiser', {
-			sdkAppId, userId, userSig
-		})
-	}
+	if (!isMicOpened) startLocalVideo();
+	if (!isCamOpened) startLocalAudio();
 }
 
 async function exitRoom() {
@@ -153,6 +146,17 @@ async function startLocalAudio() {
 	if (trtc) {
 		try {
 			await trtc.startLocalAudio({ option: { microphoneId: microphoneSelect.value } });
+			if (denoiseEl.checked) {
+				const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
+				console.log('enable denoise');
+				await trtc.startPlugin('AIDenoiser', {
+					sdkAppId, userId, userSig
+				})
+				console.log('update denoise mode', denoiseModeSelect.value);
+				await trtc.updatePlugin('AIDenoiser', {
+					mode: parseInt(denoiseModeSelect.value)
+				})
+			}
 			audio = true;
 			isMicOpened = true;
 			setButtonLoading('startLocalAudio', false);
@@ -160,7 +164,7 @@ async function startLocalAudio() {
 			reportSuccessEvent('startLocalAudio', 0);
 			addSuccessLog(`${userId ? `[${userId}]` : ''} startLocalAudio.`);
 		} catch (error) {
-			reportFailedEvent({ name: 'startLocalAudio', sdkAppId, roomId, error })
+			reportFailedEvent({ name: 'startLocalAudio', sdkAppId, strRoomId, error })
 			setButtonLoading('startLocalAudio', false);
 			addFailedLog(`${userId ? `[${userId}]` : ''} startLocalAudio failed.`);
 		}
@@ -184,7 +188,7 @@ async function startLocalVideo() {
 			addLocalControlView();
 		} catch (error) {
 			setButtonLoading('startLocalVideo', false);
-			reportFailedEvent({ name: 'startLocalVideo', sdkAppId, roomId, error })
+			reportFailedEvent({ name: 'startLocalVideo', sdkAppId, strRoomId, error })
 			addFailedLog(`${userId ? `[${userId}]` : ''} startLocalVideo failed.`);
 		}
 	}
@@ -198,6 +202,9 @@ async function stopLocalAudio() {
 	setButtonLoading('stopLocalAudio', true);
 	if (trtc) {
 		try {
+			if (denoiseEl.checked) {
+				await trtc.stopPlugin('AIDenoiser')
+			}
 			await trtc.stopLocalAudio();
 			isMicOpened = false;
 			setButtonLoading('stopLocalAudio', false);
@@ -263,6 +270,7 @@ async function startRecord() {
 			setButtonDisabled('startRecord', true)
 			setButtonDisabled('stopRecord', false)
 			setButtonDisabled('saveRecord', true)
+			addSuccessLog("recording started.")
 		} catch (error) {
 			setButtonLoading('startRecord', false)
 			console.log(error);
@@ -279,6 +287,7 @@ async function stopRecord() {
 	}
 	setButtonDisabled('startRecord', false)
 	setButtonDisabled('saveRecord', false)
+	addFailedLog("recording stopped.")
 }
 
 async function saveRecord() { 
@@ -466,7 +475,7 @@ function createShareLink() {
 	const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
 	const { origin } = window.location;
 	const pathname = window.location.pathname.replace('index.html', 'invite/invite.html');
-	return `${origin}${pathname}?userSig=${userSig}&&SDKAppId=${sdkAppId}&&userId=${userId}&&strRoomId=${strRoomId}`;
+	return `${origin}${pathname}?userSig=${userSig}&&SDKAppId=${sdkAppId}&&userId=${userId}&&strRoomId=${roomId}`;
 }
 
 let clipboard = new ClipboardJS('#inviteBtn');

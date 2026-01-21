@@ -33,6 +33,7 @@ let startRecordBtn = document.getElementById('startRecord')
 let stopRecordBtn = document.getElementById('stopRecord')
 let saveRecordBtn = document.getElementById('saveRecord')
 let denoiseEl = document.getElementById('denoise-checkbox');
+let denoiseModeSelect = document.getElementById('denoise-mode-select');
 
 language.addEventListener('click', handleChangeLanguageClick)
 
