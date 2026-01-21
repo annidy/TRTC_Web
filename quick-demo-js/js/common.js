@@ -29,6 +29,10 @@ let microphoneSelect = document.getElementById('microphone-select');
 let invite = document.getElementById('invite')
 let inviteUrl = document.getElementById('inviteUrl')
 let github = document.getElementById('github')
+let startRecordBtn = document.getElementById('startRecord')
+let stopRecordBtn = document.getElementById('stopRecord')
+let saveRecordBtn = document.getElementById('saveRecord')
+let denoiseEl = document.getElementById('denoise-checkbox');
 
 language.addEventListener('click', handleChangeLanguageClick)
 

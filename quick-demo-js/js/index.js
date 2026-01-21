@@ -14,7 +14,7 @@ window.isIframe = window.self !== window.top;
 let sdkAppId;
 let sdkSecretKey;
 let strRoomId;
-let trtc = TRTC.create()
+let trtc = TRTC.create({ assertsPath: 'assets/' })
 
 let userId;
 let shareUserId;
@@ -33,6 +33,12 @@ let video = true;
 let isShared = false;
 let isCamOpened = false;
 let isMicOpened = false;
+let isRecording = false;
+
+let mediaRecorder;
+let audioChunks = [];
+let audioBlob;
+let audioUrl;
 
 TRTC.setLogLevel(1);
 
@@ -84,8 +90,9 @@ async function enterRoom() {
 	if (window.isIframe) initDevice();
 	initParams()
 	setButtonLoading('enter', true);
+	let userSig
 	try {
-		const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
+		userSig  = genTestUserSig({ sdkAppId, userId, sdkSecretKey }).userSig;
 		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig })
 		reportSuccessEvent('enterRoom', sdkAppId)
 		refreshLink()
@@ -107,6 +114,12 @@ async function enterRoom() {
 
 	startLocalVideo();
 	startLocalAudio();
+	if (denoiseEl.checked) {
+		console.log('enable denoise');
+		await trtc.startPlugin('AIDenoiser', {
+			sdkAppId, userId, userSig
+		})
+	}
 }
 
 async function exitRoom() {
@@ -223,6 +236,62 @@ async function stopLocalVideo() {
 	}
 }
 
+async function startRecord() { 
+	if (isRecording) {
+		return;
+	}
+	setButtonLoading('startRecord', true);
+	if (trtc) {
+		try {
+			let track = trtc.getAudioTrack({ processed: true })
+			const stream = new MediaStream([track]);
+			mediaRecorder = new MediaRecorder(stream);
+
+			mediaRecorder.ondataavailable = (event) => {
+				audioChunks.push(event.data);
+			}
+
+			mediaRecorder.onstop = () => { 
+				audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+				audioUrl = URL.createObjectURL(audioBlob);
+				// audioEl = new Audio(audioUrl);
+			}
+
+			mediaRecorder.start();
+			isRecording = true;
+			setButtonLoading('startRecord', false)
+			setButtonDisabled('startRecord', true)
+			setButtonDisabled('stopRecord', false)
+			setButtonDisabled('saveRecord', true)
+		} catch (error) {
+			setButtonLoading('startRecord', false)
+			console.log(error);
+		}
+	}
+}
+
+async function stopRecord() {
+	if (!isRecording) {
+		return;
+	}
+	if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+		mediaRecorder.stop();
+	}
+	setButtonDisabled('startRecord', false)
+	setButtonDisabled('saveRecord', false)
+}
+
+async function saveRecord() { 
+	if (!audioBlob) {
+        alert('没有录音可以保存！');
+        return;
+	}
+
+	const link = document.createElement('a');
+	link.href = audioUrl;
+	link.download = 'recording.webm';
+	link.click();
+}
 
 async function startShare() {
 	setButtonLoading('startShare', true);
@@ -361,6 +430,10 @@ stopLocalVideoBtn.addEventListener('click', stopLocalVideo, false);
 
 startShareBtn.addEventListener('click', startShare, false);
 stopShareBtn.addEventListener('click', stopShare, false);
+
+startRecordBtn.addEventListener('click', startRecord, false);
+stopRecordBtn.addEventListener('click', stopRecord, false);
+saveRecordBtn.addEventListener('click', saveRecord, false);
 
 microphoneSelect.onchange = async (e) => {
 	if (trtc) {

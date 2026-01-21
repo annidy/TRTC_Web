@@ -246,6 +246,8 @@
             <select class='form-select' id='microphone-select'>
             </select>
             <label class='input-group-text' for='microphone-select'>Microphone</label>
+            <input type='checkbox' class='form-check-input' id='denoise-checkbox'>
+            <label class='form-check-label' for='denoise-checkbox'>AI denoise</label>
           </div>
         </div>
         <p style='font-size: 14px'>
@@ -301,6 +303,23 @@
             <span class="loading-icon"> </span>
             <span class="en"> Stop Share Screen </span>
             <span class='zh-cn'> 停止共享屏幕 </span>
+          </button>
+        </div>
+        <div class="wrapper">
+          <button id='startRecord' type='button' class='btn btn-primary btn-sm'>
+            <span class="loading-icon"> </span>
+            <span class="en"> Start Record Audio </span>
+            <span class='zh-cn'> 开始录音 </span>
+          </button>
+          <button id='stopRecord' type='button' class='btn btn-outline-primary btn-sm' disabled>
+            <span class="loading-icon"> </span>
+            <span class="en"> Stop Record Audio </span>
+            <span class='zh-cn'> 停止录音 </span>
+          </button>
+          <button id='saveRecord' type='button' class='btn btn-outline-primary btn-sm' disabled>
+            <span class="loading-icon"> </span>
+            <span class="en"> Save Record Audio </span>
+            <span class='zh-cn'> 保存录音 </span>
           </button>
         </div>
         <div class='alert alert-primary' role='alert' id='invite' style='display: none;flex-direction: column;'>
