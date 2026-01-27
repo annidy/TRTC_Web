@@ -14,7 +14,7 @@ window.isIframe = window.self !== window.top;
 let sdkAppId;
 let sdkSecretKey;
 let strRoomId;
-let trtc = TRTC.create({ assetsPath: 'assets/' })
+let trtc = TRTC.create({ assetsPath: 'assets/', enableSEI: true })
 
 let userId;
 let shareUserId;
@@ -425,6 +425,11 @@ function handleEvent() {
 		if (type === 'camera') getCamera();
 		if (type === 'microphone') getMicrophone();
 	});
+	trtc.on(TRTC.EVENT.SEI_MESSAGE, event => {
+		const dataStr = new TextDecoder().decode(event.data);
+		console.log('sei message', event);
+		addSuccessLog(`收到 ${event.userId} 的 sei data: ${dataStr}, seiPayloadType: ${event.seiPayloadType}, streamType: ${event.streamType} userId: ${event.userId}`)
+	})
 }
 consoleBtn.addEventListener('click', () => {
 	window.vconsole = new VConsole();
