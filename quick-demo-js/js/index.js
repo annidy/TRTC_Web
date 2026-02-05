@@ -14,6 +14,7 @@ window.isIframe = window.self !== window.top;
 let sdkAppId;
 let sdkSecretKey;
 let strRoomId;
+let roomId;
 let trtc = TRTC.create({ assetsPath: 'assets/', enableSEI: true })
 
 let userId;
@@ -105,10 +106,10 @@ async function enterRoom() {
 		reportFailedEvent({
 			name: 'enterRoom',
 			sdkAppId,
-			strRoomId,
+			roomId,
 			error
 		})
-		addFailedLog(`[${userId}] enterRoom failed.`);
+		addFailedLog(`[${userId}] enterRoom failed. ${error}`);
 	}
 
 	if (!isMicOpened) startLocalVideo();
@@ -429,6 +430,17 @@ function handleEvent() {
 		const dataStr = new TextDecoder().decode(event.data);
 		console.log('sei message', event);
 		addSuccessLog(`收到 ${event.userId} 的 sei data: ${dataStr}, seiPayloadType: ${event.seiPayloadType}, streamType: ${event.streamType} userId: ${event.userId}`)
+	})
+	trtc.on(TRTC.EVENT.CUSTOM_MESSAGE, event => {
+		const dataStr = new TextDecoder().decode(event.data);
+		console.log('custom message', event);
+		addSuccessLog(`收到 ${event.userId} 的 custom data: ${dataStr}`)
+	})
+	trtc.on(TRTC.EVENT.REMOTE_USER_ENTER, event => { 
+		addSuccessLog(`${event.userId} enter room.`)
+	})
+	trtc.on(TRTC.EVENT.REMOTE_USER_LEAVE, event => { 
+		addSuccessLog(`${event.userId} leave room.`)
 	})
 }
 consoleBtn.addEventListener('click', () => {
