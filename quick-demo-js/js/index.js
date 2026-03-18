@@ -178,7 +178,7 @@ async function startLocalVideo() {
 		try {
 			await trtc.startLocalVideo({
 				view: document.getElementById('local'), // Preview the video on the element with the elementId "localVideo" in the DOM.
-				option: { cameraId: cameraSelect.value, profile: '1080p' }
+				option: { cameraId: cameraSelect.value, profile: '480p' }
 			});
 			video = true;
 			isCamOpened = true;
