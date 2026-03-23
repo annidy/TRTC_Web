@@ -69,6 +69,20 @@ function addStreamView(remoteId) {
 		remoteDiv.setAttribute('class', 'remote');
 		playerContainer.appendChild(remoteDiv);
 	}
+
+	remoteDiv.style.width = 'auto';
+	remoteDiv.style.minWidth = '160px';
+	remoteDiv.style.minHeight = '90px';
+	remoteDiv.style.overflow = 'hidden';
+
+	const videoEl = remoteDiv.querySelector('video');
+	if (videoEl) {
+		videoEl.style.width = 'auto';
+		videoEl.style.height = 'auto';
+		videoEl.style.maxWidth = '100%';
+		videoEl.style.maxHeight = '100%';
+		videoEl.style.objectFit = 'contain';
+	}
 }
 
 function removeStreamView(remoteId) {
