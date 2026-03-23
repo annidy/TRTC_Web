@@ -442,6 +442,20 @@ function handleEvent() {
 	trtc.on(TRTC.EVENT.REMOTE_USER_EXIT, event => { 
 		addSuccessLog(`${event.userId} leave room.`)
 	})
+	trtc.on(TRTC.EVENT.NETWORK_QUALITY, event => {
+		console.log(`network-quality, uplinkNetworkQuality:${event.uplinkNetworkQuality}, downlinkNetworkQuality: ${event.downlinkNetworkQuality}`)
+		console.log(`uplink rtt:${event.uplinkRTT} loss:${event.uplinkLoss}`)
+		console.log(`downlink rtt:${event.downlinkRTT} loss:${event.downlinkLoss}`)
+
+		const uplinkText = event.uplinkNetworkQuality !== undefined ? event.uplinkNetworkQuality : '-';
+		const downlinkText = event.downlinkNetworkQuality !== undefined ? event.downlinkNetworkQuality : '-';
+
+		const uplinkEl = document.getElementById('uplink-quality');
+		const downlinkEl = document.getElementById('downlink-quality');
+
+		if (uplinkEl) uplinkEl.innerText = uplinkText;
+		if (downlinkEl) downlinkEl.innerText = downlinkText;
+	})
 }
 consoleBtn.addEventListener('click', () => {
 	window.vconsole = new VConsole();
