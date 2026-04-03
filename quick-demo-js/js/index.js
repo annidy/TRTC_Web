@@ -354,6 +354,26 @@ async function stopShare() {
 	}
 }
 
+async function toggleBigStream(userId, streamType, elementId) {
+	if (!userId || !streamType || !elementId) return;
+	try {
+		await trtc.updateRemoteVideo({ view: document.getElementById(elementId), userId, streamType: TRTC.TYPE.STREAM_TYPE_MAIN, option: { small: false } })
+		addSuccessLog(`${userId ? `[${userId}]` : ''} switch remote stream to large mode.`);
+	} catch (error) {
+		console.warn('toggleBigStream failed', error);
+	}
+}
+
+async function toggleSmallSize(userId, streamType, elementId) {
+	if (!userId || !streamType || !elementId) return;
+	try {
+		await trtc.updateRemoteVideo({ view: document.getElementById(elementId), userId, streamType: TRTC.TYPE.STREAM_TYPE_MAIN, option: { small: true } })
+		addSuccessLog(`${userId ? `[${userId}]` : ''} switch remote stream to small model.`);
+	} catch (error) {
+		console.warn('toggleSmallStream failed', error);
+	}
+}
+
 const getDevices = async () => {
 	await getCamera();
 	await getMicrophone();
@@ -408,10 +428,10 @@ async function initDevice() {
 
 function handleEvent() {
 	trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
-		// In order to display the video, you need to place an HTMLElement in the DOM, which can be a div tag with an id of `${userId}_${streamType}`.
 		const elementId = `${userId}_${streamType}`;
-		addStreamView(elementId);
+		addStreamView(elementId, userId, streamType);
 		trtc.startRemoteVideo({ userId, streamType, view: elementId });
+		addSuccessLog(`${userId ? `[${userId}]` : ''} ${streamType} remoteVideoAvailable.`);
 	});
 	trtc.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, ({ userId, streamType }) => {
 		const elementId = `${userId}_${streamType}`;

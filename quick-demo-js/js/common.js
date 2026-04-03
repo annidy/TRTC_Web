@@ -60,7 +60,7 @@ function changeLanguageTo(lang) {
 	document.title = lang === 'en' ? 'Quick demo js | Tencent RTC' : 'Quick demo js | TRTC 实时音视频';
 }
 
-function addStreamView(remoteId) {
+function addStreamView(remoteId, userId, streamType) {
 	playerContainer.style.minHeight = '100px';
 	let remoteDiv = document.getElementById(remoteId);
 	if (!remoteDiv) {
@@ -70,10 +70,38 @@ function addStreamView(remoteId) {
 		playerContainer.appendChild(remoteDiv);
 	}
 
+	remoteDiv.dataset.userId = userId || '';
+	remoteDiv.dataset.streamType = streamType || '';
+	remoteDiv.dataset.elementId = remoteId;
+	remoteDiv.dataset.big = 'true';
+
 	remoteDiv.style.width = 'auto';
 	remoteDiv.style.minWidth = '160px';
 	remoteDiv.style.minHeight = '90px';
 	remoteDiv.style.overflow = 'hidden';
+	remoteDiv.style.cursor = 'pointer';
+	remoteDiv.title = '双击切换大小';
+
+	remoteDiv.ondblclick = () => {
+		const uid = remoteDiv.dataset.userId;
+		const st = remoteDiv.dataset.streamType;
+		const eid = remoteDiv.dataset.elementId;
+		const isBig = remoteDiv.dataset.big === 'true';
+
+		if (!uid || !st || !eid) {
+			return;
+		}
+
+		if (!isBig) {
+			window.toggleBigStream?.(uid, st, eid);
+			remoteDiv.dataset.big = 'true';
+			remoteDiv.classList.add('maximized');
+		} else {
+			window.toggleSmallSize?.(uid, st, eid);
+			remoteDiv.dataset.big = 'false';
+			remoteDiv.classList.remove('maximized');
+		}
+	};
 
 	const videoEl = remoteDiv.querySelector('video');
 	if (videoEl) {

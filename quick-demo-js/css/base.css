@@ -176,6 +176,13 @@ ul {
   position: relative;
   display: inline-block;
   vertical-align: top;
+  transition: width 0.25s ease, height 0.25s ease;
+}
+
+.remote.maximized {
+  width: 70%;
+  min-width: 480px;
+  min-height: 360px;
 }
 
 .remote video,
