@@ -118,11 +118,8 @@ async function enterRoom() {
 			roomId: strRoomId,
 			error
 		})
-		addFailedLog(`[${userId}] enterRoom failed. ${error}`);
+		addFailedLog(`[${userId}] enterRoom failed. Reason: ${error.message || error}`);
 	}
-
-	if (!isMicOpened) startLocalVideo();
-	if (!isCamOpened) startLocalAudio();
 }
 
 async function exitRoom() {
