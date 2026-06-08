@@ -10,16 +10,44 @@ import { VideoMixerOptions, UpdateVideoMixerOptions, VideoMixer } from './plugin
 import { SmallStreamAutoSwitcher, SmallStreamAutoSwitcherOptions } from './plugins/small-stream-auto-switcher';
 import { Chorus, StartChorusOption, UpdateChorusOption } from './plugins/chorus';
 import { LEBPlayer, StartLEBPlayerOption, UpdateLEBPlayerOption } from './plugins/lebplayer';
+import { RealtimeTranscriber, StartRealtimeTranscriberOption, StopRealtimeTranscriberOption } from './plugins/realtime-transcriber';
 
-export { CDNStreamingOptions, DeviceDetectorOptions, VirtualBackgroundOptions, UpdateVirtualBackgroundOptions, WatermarkOptions, BeautyOptions, UpdateBeautyOptions, BasicBeautyOptions, StartCrossRoomOption, UpdateCrossRoomOption, StopCrossRoomOption, SmallStreamAutoSwitcherOptions, VideoMixerOptions, UpdateVideoMixerOptions };
-type TRTCPlugin = typeof CrossRoom | typeof CDNStreaming | typeof DeviceDetector | typeof VirtualBackground | typeof Watermark | typeof Beauty | typeof BasicBeauty | typeof CustomEncryption | typeof SmallStreamAutoSwitcher | typeof VideoMixer | typeof Chorus | typeof LEBPlayer;
+export { CDNStreamingOptions, DeviceDetectorOptions, VirtualBackgroundOptions, UpdateVirtualBackgroundOptions, WatermarkOptions, BeautyOptions, UpdateBeautyOptions, BasicBeautyOptions, StartCrossRoomOption, UpdateCrossRoomOption, StopCrossRoomOption, SmallStreamAutoSwitcherOptions, VideoMixerOptions, UpdateVideoMixerOptions, StartRealtimeTranscriberOption, StopRealtimeTranscriberOption };
+type TRTCPlugin = typeof CrossRoom | typeof CDNStreaming | typeof DeviceDetector | typeof VirtualBackground | typeof Watermark | typeof Beauty | typeof BasicBeauty | typeof CustomEncryption | typeof SmallStreamAutoSwitcher | typeof VideoMixer | typeof Chorus | typeof LEBPlayer | typeof RealtimeTranscriber;
+export interface PlaybackQualityStream {
+  name: string;
+  userId: string;
+  streamType?: TRTCStreamType;
+  bitrate: number;
+}
+export interface ResolutionConfig {
+  userId: string;
+  streamType: TRTCStreamType;
+  name: string;
+}
+export interface SwitchPlaybackQualityOptions {
+  quality?: string;
+  streamList?: PlaybackQualityStream[];
+  onSwitched?: (from: ResolutionConfig, to: ResolutionConfig) => void;
+}
+
 export type ExperimentalAPIFunctionMap = {
   'enableAudioFrameEvent': EnableAudioFrameEventOptions;
   'resumeRemotePlayer': RemotePlayerOptions;
   'pauseRemotePlayer': RemotePlayerOptions;
+  'requestPictureInPicture': RequestPictureInPictureOptions;
+  'requestFullScreen': RequestFullScreenOptions;
+  'switchPlaybackQuality': SwitchPlaybackQualityOptions;
+  'preconnect': PreconnectParams;
 }
 
+export interface RequestPictureInPictureOptions { enable: boolean }
+export interface RequestFullScreenOptions { enable: boolean }
 export interface RemotePlayerOptions { userId: string, streamType?: TRTCStreamType }
+interface EnablePreconnectParams { enable: true; userId: string; userSig: string; sdkAppId: number; }
+interface ClosePreconnectParams { enable: false; userId?: never; userSig?: never; sdkAppId?: never;
+}
+export type PreconnectParams = EnablePreconnectParams | ClosePreconnectParams;
 
 export declare type PluginStartOptionsMap = {
   'AudioMixer': AudioMixerOptions;
@@ -38,6 +66,7 @@ export declare type PluginStartOptionsMap = {
   'AudioProcessor': InitAudioProcessorOptions;
   'Chorus': StartChorusOption;
   'LEBPlayer': StartLEBPlayerOption;
+  'RealtimeTranscriber': StartRealtimeTranscriberOption;
 };
 
 export declare type PluginUpdateOptionsMap = {
@@ -73,6 +102,7 @@ export declare type PluginStopOptionsMap = {
   'CustomEncryption': undefined;
   'Chorus': undefined;
   'LEBPlayer': undefined;
+  'RealtimeTranscriber': StopRealtimeTranscriberOption;
 };
 
 export declare class RtcError extends Error implements RTCErrorInterface {
@@ -336,12 +366,11 @@ export declare const enum BannedReason {
 }
 
 export declare const enum PEER_LEAVE_REASON {
-  NORMAL_LEAVE = 'normal leave',
-  TIMEOUT_LEAVE = 'timeout leave',
-  KICK = 'kick',
-  ROLE_CHANGE = 'role change'
+  NORMAL_LEAVE = 0,
+  TIMEOUT_LEAVE = 1,
+  KICK = 2,
+  ROLE_CHANGE = 3
 }
-
 export declare type PluginWithAssets = {
   plugin: TRTCPlugin;
   assetsPath?: string;
@@ -360,6 +389,7 @@ export interface AudioProfile { sampleRate: number, channelCount: number, bitrat
 export declare interface LocalVideoConfig {
   view?: string | HTMLElement | HTMLElement[] | null;
   publish?: boolean;
+  forcePublish?: boolean;
   mute?: boolean | string;
   option?: {
     cameraId?: string;
@@ -406,11 +436,18 @@ export declare interface EnterRoomConfig {
   scene?: Scene;
   userDefineRecordId?: string;
   playoutDelay?: PlayoutDelay;
+  quickStart?: QuickStartConfig;
 }
 
 export interface PlayoutDelay {
   min: number;
   max: number;
+}
+
+export interface QuickStartConfig {
+  remoteUserId: string;
+  small?: boolean;
+  domain?: string;
 }
 
 export declare interface SwitchRoomConfig {
@@ -436,6 +473,7 @@ export declare interface ScreenShareConfig {
     videoTrack?: MediaStreamTrack;
     captureElement?: HTMLElement;
     preferDisplaySurface?: 'current-tab' | 'tab' | 'window' | 'monitor';
+    selfBrowserSurface?: 'include' | 'exclude';
     qosPreference?: typeof TRTCType.QOS_PREFERENCE_SMOOTH | typeof TRTCType.QOS_PREFERENCE_CLEAR;
   };
 }
@@ -470,7 +508,8 @@ export declare interface StopRemoteVideoConfig {
 }
 export declare interface LocalAudioConfig {
   publish?: boolean;
-  mute?: boolean;
+  mute?: boolean | 'microphone';
+  muteKeepVolumeDetection?: boolean;
   option?: {
     microphoneId?: string;
     profile?: keyof typeof audioProfileMap;
@@ -483,7 +522,6 @@ export declare interface LocalAudioConfig {
   };
 }
 export declare interface UpdateLocalAudioConfig extends LocalAudioConfig {
-  mute?: boolean;
   option?: {
     microphoneId?: string;
     audioTrack?: MediaStreamTrack;
@@ -770,6 +808,7 @@ export declare interface RemoteStatistic {
   audio: {
     bitrate: number;
     audioLevel: number;
+    jitterBufferDelay: number;
   };
   video: {
     width: number;
@@ -777,6 +816,7 @@ export declare interface RemoteStatistic {
     frameRate: number;
     bitrate: number;
     videoType: TRTCVideoType;
+    jitterBufferDelay: number;
   }[];
   userId: string;
 }
@@ -1360,7 +1400,7 @@ export declare interface TRTCEventTypes {
   }];
   [TRTCEvent.REMOTE_USER_EXIT]: [{
     userId: string;
-    reason?: keyof typeof PEER_LEAVE_REASON; 
+    reason?: PEER_LEAVE_REASON; 
   }];
   [TRTCEvent.REMOTE_AUDIO_AVAILABLE]: [{
     userId: string;
@@ -2417,7 +2457,10 @@ export declare class TRTC {
    * **Note**
    * - This interface does not support use under the http protocol, please use the https protocol to deploy your website. {@link https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#Privacy_and_security Privacy and security}
    * - You can call the browser's native interface [getCapabilities](https://developer.mozilla.org/en-US/docs/Web/API/InputDeviceInfo/getCapabilities) to get the maximum resolutions supported by the camera, frame rate, mobile devices to distinguish between front and rear cameras, etc. This interface supports Chrome 67+, Edge 79+, Safari 17+, Opera 54+.
-   * @param {boolean} [requestPermission=true] `Since v5.6.3`. Whether to request permission to use the camera. If requestPermission is true, calling this method may temporarily open the camera to ensure that the camera list can be normally obtained, and the SDK will automatically stop the camera capture later.
+   * - By default, virtual camera devices are included in the returned list. Set `filterVirtualDevice: true` to filter out unavailable virtual devices while preserving legitimate ones (e.g. OBS Virtual Camera).
+   * @param {boolean | object} [option=true] `Since v5.6.3`. When passing a boolean, it indicates whether to request permission. When passing an object, it supports the following properties:
+   * @param {boolean} [option.requestPermission=true] Whether to request permission to use the camera. If true, calling this method may temporarily open the camera to ensure that the camera list can be normally obtained, and the SDK will automatically stop the camera capture later.
+   * @param {boolean} [option.filterVirtualDevice=false] Whether to filter virtual camera devices. Default is false. When set to true, the SDK will filter out unavailable virtual devices while preserving legitimate capture devices (e.g. OBS Virtual Camera).
    * @example
    * const cameraList = await TRTC.getCameraList();
    * if (cameraList[0] && cameraList[0].getCapabilities) {
@@ -2431,25 +2474,34 @@ export declare class TRTC {
    *     }
    *   }
    * }
+   * @example
+   * // Filter out virtual cameras
+   * const realCameras = await TRTC.getCameraList({ requestPermission: true, filterVirtualDevice: true });
    * @returns {Promise.<MediaDeviceInfo[]>} Promise returns an array of {@link https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo|MediaDeviceInfo}
    */
-  static getCameraList(requestPermission?: boolean): Promise<MediaDeviceInfo[]>;
+  static getCameraList(option?: boolean | { requestPermission?: boolean; filterVirtualDevice?: boolean }): Promise<MediaDeviceInfo[]>;
   /**
    * Returns the list of microphone devices
    * <br>
    * **Note**
    * - This interface does not support use under the http protocol, please use the https protocol to deploy your website. {@link https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#Privacy_and_security Privacy and security}
    * - You can call the browser's native interface [getCapabilities](https://developer.mozilla.org/en-US/docs/Web/API/InputDeviceInfo/getCapabilities) to get information about the microphone's capabilities, e.g. the maximum number of channels supported, etc. This interface supports Chrome 67+, Edge 79+, Safari 17+, Opera 54+.
-   * @param {boolean} [requestPermission=true] `Since v5.6.3`. Whether to request permission to use the microphone. If requestPermission is true, calling this method may temporarily open the microphone to ensure that the microphone list can be normally obtained, and the SDK will automatically stop the microphone capture later.
+   * - By default, virtual microphone devices are included in the returned list. Set `filterVirtualDevice: true` to filter out devices whose label contains the "virtual" keyword.
+   * @param {boolean | object} [option=true] `Since v5.6.3`. When passing a boolean, it indicates whether to request permission. When passing an object, it supports the following properties:
+   * @param {boolean} [option.requestPermission=true] Whether to request permission to use the microphone. If true, calling this method may temporarily open the microphone to ensure that the microphone list can be normally obtained, and the SDK will automatically stop the microphone capture later.
+   * @param {boolean} [option.filterVirtualDevice=false] Whether to filter virtual microphone devices.  If all devices are filtered out, the original list will be returned.
    * @example
    * const microphoneList = await TRTC.getMicrophoneList();
    * if (microphoneList[0] && microphoneList[0].getCapabilities) {
    *   const { channelCount } = microphoneList[0].getCapabilities();
    *   console.log(channelCount.max);
    * }
+   * @example
+   * // Filter out virtual microphones
+   * const realMicrophones = await TRTC.getMicrophoneList({ requestPermission: true, filterVirtualDevice: true });
    * @returns {Promise.<MediaDeviceInfo[]>} Promise returns an array of {@link https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo|MediaDeviceInfo}
    */
-  static getMicrophoneList(requestPermission?: boolean): Promise<MediaDeviceInfo[]>;
+  static getMicrophoneList(option?: boolean | { requestPermission?: boolean; filterVirtualDevice?: boolean }): Promise<MediaDeviceInfo[]>;
   /**
    * Returns the list of speaker devices. Only support PC browser, not support mobile browser.
    * <br>

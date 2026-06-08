@@ -10,20 +10,18 @@ let isPause = false;
 
 // --------functions----------
 async function enterRoom() {
-    const { sdkAppId, sdkSecretKey, userId, roomId, userSig } = initParams();
-    await trtc.enterRoom({ roomId, sdkAppId, userId, userSig });
-    await trtc.startLocalAudio();
-    switchButtonStatus('enter-btn', 'exit-btn', true);
-    reportSuccessEvent('enterRoom', sdkAppId);
-    refreshLink({ sdkAppId, sdkSecretKey, roomId });
+    await demoEnterRoom(trtc, {
+        afterEnter: async () => { await trtc.startLocalAudio(); }
+    });
 }
 
 async function exitRoom() {
-    await trtc.exitRoom();
-    await trtc.stopLocalAudio();
-    await stopAudioMixer();
-    switchButtonStatus('enter-btn', 'exit-btn', false);
-    cleanShareLink();
+    await demoExitRoom(trtc, {
+        afterExit: async () => {
+            await trtc.stopLocalAudio();
+            await stopAudioMixer();
+        }
+    });
 }
 
 async function startAudioMixer() {
@@ -66,4 +64,15 @@ async function pauseOrResumeAudio() {
 async function playFromSpecificSecond() {
     const seekFrom = parseInt(document.getElementById('time-input').value);
     await trtc.updatePlugin('AudioMixer', { id, seekFrom });
+}
+
+// i18n initialization
+initPageI18n(updateInviteSection);
+
+function updateInviteSection() {
+    const inviteEl = document.getElementById('invite-section-el');
+    if (inviteEl) {
+        inviteEl.querySelector('h3').textContent = t('invite.defaultTitle');
+        inviteEl.querySelector('.note').textContent = t('invite.sendInvite');
+    }
 }

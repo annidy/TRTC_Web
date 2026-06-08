@@ -5,19 +5,14 @@ trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
     trtc.startRemoteVideo({ userId, streamType, view: 'remote-video-view' });
 });
 
+
 // --------functions----------
 async function enterRoom() {
-    const { sdkAppId, sdkSecretKey, userId, roomId, userSig } = initParams();
-    await trtc.enterRoom({ roomId, sdkAppId, userId, userSig });
-    switchButtonStatus('enter-btn', 'exit-btn', true);
-    reportSuccessEvent('enterRoom', sdkAppId);
-    refreshLink({ sdkAppId, sdkSecretKey, roomId });
+    await demoEnterRoom(trtc);
 }
 
 async function exitRoom() {
-    await trtc.exitRoom();
-    switchButtonStatus('enter-btn', 'exit-btn', false);
-    cleanShareLink();
+    await demoExitRoom(trtc);
 }
 
 async function startLocalAudio() {
@@ -46,3 +41,11 @@ async function updateVideoProfile() {
     const profile = getSelectedElement('video-profile');
     await trtc.updateLocalVideo({ option: { profile } });
 }
+
+// i18n initialization
+initPageI18n(() => {
+    const localTitle = document.querySelector('video-views .local-title');
+    const remoteTitle = document.querySelector('video-views .remote-title');
+    if (localTitle) localTitle.textContent = t('video.localVideo');
+    if (remoteTitle) remoteTitle.textContent = t('video.remoteVideo');
+});

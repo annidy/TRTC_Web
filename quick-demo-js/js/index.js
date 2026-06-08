@@ -1,8 +1,8 @@
 /* eslint-disable*/
 // -------document events--------
 
-document.getElementById('sdkAppId').value = getQueryString('sdkAppId');
-document.getElementById('sdkSecretKey').value = getQueryString('sdkSecretKey');
+document.getElementById('sdkAppId').value = getQueryString('sdkAppId') || localStorage.getItem('trtc_sdkAppId') || '';
+document.getElementById('sdkSecretKey').value = getQueryString('sdkSecretKey') || localStorage.getItem('trtc_sdkSecretKey') || '';
 document.getElementById('userId').value = getQueryString('userId') || 'user_' + Math.floor(Math.random() * 1000000);
 document.getElementById('strRoomId').value = getQueryString('strRoomId') || 'room_' + Math.floor(Math.random() * 1000);
 const state = { url:window.location.href.split("?")[0] };
@@ -54,8 +54,10 @@ handleEvent();
 TRTC.isSupported().then((checkResult) => {
 	console.log('checkResult', checkResult.result, 'checkDetail', checkResult.detail);
 	if (!checkResult.result) {
-		alert('Your browser does not supported TRTC!');
-		window.location.href = 'https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html';
+		const isZh = getLanguage() === 'zh-cn';
+		alert(isZh
+			? '当前浏览器不支持 TRTC，请使用最新版本的 Chrome 浏览器。'
+			: 'Your browser does not support TRTC. Please use the latest version of Chrome.');
 	}
 })
 
@@ -85,13 +87,20 @@ function initParams() {
 
 		throw new Error('Please fill in the correct SDKAppId, SDKSecretKey, userId, strRoomId');
 	}
+
+	// Cache sdkAppId and sdkSecretKey to localStorage
+	try {
+		localStorage.setItem('trtc_sdkAppId', String(sdkAppId));
+		localStorage.setItem('trtc_sdkSecretKey', sdkSecretKey);
+	} catch (e) {}
+
 }
 
 async function enterRoom() {
 	if (window.isIframe) initDevice();
-	initParams()
 	setButtonLoading('enter', true);
 	try {
+		initParams()
 		const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
 		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig })
 		reportSuccessEvent('enterRoom', sdkAppId)
@@ -106,7 +115,7 @@ async function enterRoom() {
 		reportFailedEvent({
 			name: 'enterRoom',
 			sdkAppId,
-			roomId,
+			roomId: strRoomId,
 			error
 		})
 		addFailedLog(`[${userId}] enterRoom failed. ${error}`);
@@ -215,7 +224,7 @@ async function stopLocalAudio() {
 		} catch (error) {
 			setButtonLoading('stopLocalAudio', false);
 			reportFailedEvent({ name: 'stopLocalAudio', sdkAppId, roomId, error })
-			addFailedLog(`${userId ? `[${userId}]` : ''} startLocalAudio failed.`);
+			addFailedLog(`${userId ? `[${userId}]` : ''} stopLocalAudio failed. Reason: ${error.message || error}`);
 		}
 	}
 }
@@ -350,7 +359,7 @@ async function stopShare() {
 			error,
 			type: 'share'
 		})
-		addFailedLog(`${userId ? `[${userId}]` : ''} stopScreenShare failed.`);
+		addFailedLog(`${userId ? `[${userId}]` : ''} stopScreenShare failed. Reason: ${error.message || error}`);
 	}
 }
 
@@ -533,6 +542,14 @@ let clipboard = new ClipboardJS('#inviteBtn');
 clipboard.on('success', (e) => {
 	refreshLink();
 	showTooltip(e.trigger, 'Copied!')
+});
+
+document.getElementById('openLinkBtn').addEventListener('click', () => {
+	const link = inviteUrl.value;
+	if (link) {
+		window.open(link, '_blank', 'noopener,noreferrer');
+		refreshLink();
+	}
 });
 
 function addLocalControlView() {

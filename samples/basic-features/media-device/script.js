@@ -25,19 +25,16 @@ document.getElementById('update-speaker-btn').addEventListener('click', async ()
 
 // --------functions----------
 async function enterRoom() {
-    const { sdkAppId, sdkSecretKey, userId, roomId, userSig } = initParams();
-    await trtc.enterRoom({ roomId, sdkAppId, userId, userSig });
-    switchButtonStatus('enter-btn', 'exit-btn', true);
-    refreshLink({ sdkAppId, sdkSecretKey, roomId });
-    reportSuccessEvent('enterRoom', sdkAppId);
+    await demoEnterRoom(trtc);
 }
 
 async function exitRoom() {
-    await trtc.exitRoom();
-    await stopLocalAudio();
-    await stopLocalVideo();
-    cleanShareLink();
-    switchButtonStatus('enter-btn', 'exit-btn', false);
+    await demoExitRoom(trtc, {
+        afterExit: async () => {
+            await stopLocalAudio();
+            await stopLocalVideo();
+        }
+    });
 }
 
 async function startLocalAudio() {
@@ -88,3 +85,11 @@ function handleEvent() {
         await handleDeviceChange(event.type);
     });
 }
+
+// i18n initialization
+initPageI18n(() => {
+    const localTitle = document.querySelector('video-views .local-title');
+    const remoteTitle = document.querySelector('video-views .remote-title');
+    if (localTitle) localTitle.textContent = t('video.localVideo');
+    if (remoteTitle) remoteTitle.textContent = t('video.remoteVideo');
+});

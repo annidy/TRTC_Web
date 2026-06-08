@@ -15,22 +15,22 @@ function initOptions() {
 }
 
 async function enterRoom() {
-    const { sdkAppId, sdkSecretKey, userId, roomId, userSig } = initParams();
-    await trtc.enterRoom({ roomId, sdkAppId, userId, userSig });
-    await trtc.startLocalVideo({ view: 'local-video-view', option: { mirror: false } });
-    document.getElementById('start-watermark-btn').disabled = false;
-    switchButtonStatus('enter-btn', 'exit-btn', true);
-    reportSuccessEvent('enterRoom', sdkAppId);
-    refreshLink({ sdkAppId, sdkSecretKey, roomId });
+    await demoEnterRoom(trtc, {
+        afterEnter: async () => {
+            await trtc.startLocalVideo({ view: 'local-video-view', option: { mirror: false } });
+            document.getElementById('start-watermark-btn').disabled = false;
+        }
+    });
 }
 
 async function exitRoom() {
-    await trtc.exitRoom();
-    await trtc.stopLocalVideo();
-    await stopWatermark();
-    document.getElementById('start-watermark-btn').disabled = true;
-    switchButtonStatus('enter-btn', 'exit-btn', false);
-    cleanShareLink();
+    await demoExitRoom(trtc, {
+        afterExit: async () => {
+            await trtc.stopLocalVideo();
+            await stopWatermark();
+            document.getElementById('start-watermark-btn').disabled = true;
+        }
+    });
 }
 
 async function startWatermark() {
@@ -42,4 +42,19 @@ async function startWatermark() {
 async function stopWatermark() {
     await trtc.stopPlugin('Watermark');
     switchButtonStatus('start-watermark-btn', 'stop-watermark-btn', false);
+}
+
+// i18n initialization
+initPageI18n(updateInviteSection);
+
+function updateInviteSection() {
+    const inviteEl = document.getElementById('invite-section-el');
+    if (inviteEl) {
+        inviteEl.querySelector('h3').textContent = t('invite.defaultTitle');
+        inviteEl.querySelector('.note').textContent = t('invite.sendInvite');
+    }
+    const localTitle = document.querySelector('video-views .local-title');
+    const remoteTitle = document.querySelector('video-views .remote-title');
+    if (localTitle) localTitle.textContent = t('video.localVideo');
+    if (remoteTitle) remoteTitle.textContent = t('video.remoteVideo');
 }

@@ -1,34 +1,26 @@
 const trtc = TRTC.create({ enableSEI: true });
 
-let size;
-let imageUrl;
-
 // listen for events
 handleEvent();
 
 // --------functions----------
-function initOptions() {
-    size = document.getElementById('size').checked;
-    imageUrl = document.getElementById('image-url').value;
-}
-
 async function enterRoom() {
-    const { sdkAppId, sdkSecretKey, userId, roomId, userSig } = initParams();
-    await trtc.enterRoom({ roomId, sdkAppId, userId, userSig });
-    document.getElementById('send-custom-message-btn').disabled = false;
-    document.getElementById('start-video-btn').disabled = false;
-    switchButtonStatus('enter-btn', 'exit-btn', true);
-    reportSuccessEvent('enterRoom', sdkAppId);
-    refreshLink({ sdkAppId, sdkSecretKey, roomId });
+    await demoEnterRoom(trtc, {
+        afterEnter: async () => {
+            document.getElementById('send-custom-message-btn').disabled = false;
+            document.getElementById('start-video-btn').disabled = false;
+        }
+    });
 }
 
 async function exitRoom() {
-    await trtc.exitRoom();
-    await stopLocalVideo();
-    document.getElementById('send-custom-message-btn').disabled = true;
-    document.getElementById('start-video-btn').disabled = true;
-    switchButtonStatus('enter-btn', 'exit-btn', false);
-    cleanShareLink();
+    await demoExitRoom(trtc, {
+        afterExit: async () => {
+            await stopLocalVideo();
+            document.getElementById('send-custom-message-btn').disabled = true;
+            document.getElementById('start-video-btn').disabled = true;
+        }
+    });
 }
 
 function sendCustomMessage() {
@@ -36,7 +28,7 @@ function sendCustomMessage() {
     const data = new TextEncoder().encode(message).buffer;
     trtc.sendCustomMessage({ cmdId: 1, data });
     document.getElementById('custom-message').value = '';
-    toastify('Custom message sent!');
+    toastify(t('dataMessages.customMessageSent'));
 }
 
 async function startLocalVideo() {
@@ -54,7 +46,7 @@ async function stopLocalVideo() {
 function sendSEIMessage() {
     const unit8Array = new Uint8Array([1, 2, 3]);
     trtc.sendSEIMessage(unit8Array.buffer);
-    toastify('SEI message sent!');
+    toastify(t('dataMessages.seiMessageSent'));
 }
 
 function handleEvent() {
@@ -64,11 +56,26 @@ function handleEvent() {
     });
     // receive custom message
     trtc.on(TRTC.EVENT.CUSTOM_MESSAGE, event => {
-        toastify(`Received custom message from ${event.userId}, message: ${new TextDecoder().decode(event.data)}`);
+        toastify(t('dataMessages.receivedCustomMsg', { userId: event.userId, message: new TextDecoder().decode(event.data) }));
     });
     // receive SEI message
     trtc.on(TRTC.EVENT.SEI_MESSAGE, event => {
-        toastify(`Received sei message from ${event.userId}, data: ${event.data}, streamType: ${event.streamType}`);
+        toastify(t('dataMessages.receivedSeiMsg', { userId: event.userId, data: event.data, streamType: event.streamType }));
         console.log(event.data)
     });
+}
+
+// i18n initialization
+initPageI18n(updateInviteSection);
+
+function updateInviteSection() {
+    const inviteEl = document.getElementById('invite-section-el');
+    if (inviteEl) {
+        inviteEl.querySelector('h3').textContent = t('invite.defaultTitle');
+        inviteEl.querySelector('.note').textContent = t('invite.sendInvite');
+    }
+    const localTitle = document.querySelector('video-views .local-title');
+    const remoteTitle = document.querySelector('video-views .remote-title');
+    if (localTitle) localTitle.textContent = t('video.localVideo');
+    if (remoteTitle) remoteTitle.textContent = t('video.remoteVideo');
 }
