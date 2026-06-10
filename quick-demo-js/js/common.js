@@ -134,6 +134,10 @@ function setButtonLoading(id, status) {
 	loadingElement.style.display = status ? 'inline-block' : 'none';
 }
 
+function formatTimestamp(date = new Date()) {
+	return date.toISOString().replace('T', ' ').replace('Z', '');
+}
+
 function addSuccessLog(log) {
 	const logItem = document.createElement('div');
 
@@ -141,10 +145,15 @@ function addSuccessLog(log) {
 	success.setAttribute('class', 'success');
 	success.innerText = '🟩 ';
 
+	const timeDiv = document.createElement('span');
+	timeDiv.style.color = '#888';
+	timeDiv.innerText = `[${formatTimestamp()}] `;
+
 	const logDiv = document.createElement('span');
 	logDiv.innerText = log;
 
 	logItem.appendChild(success);
+	logItem.appendChild(timeDiv);
 	logItem.appendChild(logDiv);
 
 	logContainer.appendChild(logItem);
@@ -157,10 +166,15 @@ function addFailedLog(log) {
 	const success = document.createElement('span');
 	success.innerText = '🟥 '
 
+	const timeDiv = document.createElement('span');
+	timeDiv.style.color = '#888';
+	timeDiv.innerText = `[${formatTimestamp()}] `;
+
 	const logDiv = document.createElement('span');
 	logDiv.innerText = log;
 
 	logItem.appendChild(success);
+	logItem.appendChild(timeDiv);
 	logItem.appendChild(logDiv);
 
 	logContainer.appendChild(logItem);
