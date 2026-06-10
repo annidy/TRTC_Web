@@ -101,16 +101,17 @@ async function enterRoom() {
 	setButtonLoading('enter', true);
 	try {
 		initParams()
-		let sence = TRTC.TYPE.SCENE_RTC
+		let scene = TRTC.TYPE.SCENE_RTC
 		let role = TRTC.TYPE.ROLE_ANCHOR
 		if (senceSelect.value === '1') {
-			sence = TRTC.TYPE.SENCE_LIVE
+			scene = TRTC.TYPE.SCENE_LIVE
 		}
-		if (roleSelect.value === '1') {
-			role = TRTC.TYPE.ROLE_AUDIENCE
-		}
+		// if (roleSelect.value === '1') {
+		// 	role = TRTC.TYPE.ROLE_AUDIENCE
+		// }
+		let sence = scene;
 		const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
-		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig, sence, role })
+		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig, scene, sence, role })
 		reportSuccessEvent('enterRoom', sdkAppId)
 		refreshLink()
 		invite.style.display = 'flex';
@@ -446,6 +447,14 @@ function handleEvent() {
 		addStreamView(elementId, userId, streamType);
 		trtc.startRemoteVideo({ userId, streamType, view: elementId });
 		addSuccessLog(`${userId ? `[${userId}]` : ''} ${streamType} remoteVideoAvailable.`);
+		if (roleSelect.value === '1') {
+			console.log('switchRole to audience');
+			trtc.switchRole(TRTC.TYPE.ROLE_AUDIENCE).then(() => {
+				addSuccessLog('switchRole success.');
+			}).catch(e => {
+				addFailedLog(`switchRole failed ${e.message}`);
+			});
+		}
 	});
 	trtc.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, ({ userId, streamType }) => {
 		const elementId = `${userId}_${streamType}`;
