@@ -101,12 +101,20 @@ async function enterRoom() {
 	setButtonLoading('enter', true);
 	try {
 		initParams()
+		let sence = TRTC.TYPE.SCENE_RTC
+		let role = TRTC.TYPE.ROLE_ANCHOR
+		if (senceSelect.value === '1') {
+			sence = TRTC.TYPE.SENCE_LIVE
+		}
+		if (roleSelect.value === '1') {
+			role = TRTC.TYPE.ROLE_AUDIENCE
+		}
 		const { userSig } = genTestUserSig({ sdkAppId, userId, sdkSecretKey });
-		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig })
+		await trtc.enterRoom({ strRoomId, sdkAppId, userId, userSig, sence, role })
 		reportSuccessEvent('enterRoom', sdkAppId)
 		refreshLink()
 		invite.style.display = 'flex';
-		addSuccessLog(`[${userId}] enterRoom.`);
+		addSuccessLog(`[${userId} ${sence} ${role}] enterRoom.`);
 		setButtonLoading('enter', false);
 		setButtonDisabled('enter', true);
 	} catch (error) {

@@ -34,6 +34,8 @@ let stopRecordBtn = document.getElementById('stopRecord')
 let saveRecordBtn = document.getElementById('saveRecord')
 let denoiseEl = document.getElementById('denoise-checkbox');
 let denoiseModeSelect = document.getElementById('denoise-mode-select');
+let senceSelect = document.getElementById('sence-select');
+let roleSelect = document.getElementById('role-select');
 
 language.addEventListener('click', handleChangeLanguageClick)
 

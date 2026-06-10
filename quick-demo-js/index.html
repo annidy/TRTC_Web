@@ -231,12 +231,34 @@
           <span class='zh-cn'>配置</span>
         </h1>
         <div class="wrapper">
-          <input type='checkbox' class='form-check-input' id='denoise-checkbox' checked>
-          <label class='form-check-label' for='denoise-checkbox'>AI denoise</label>
-          <select class='form-select' id='denoise-mode-select'>
-            <option value='0'>默认模式</option>
-            <option value='1' selected>远场模式</option>
-          </select>
+          <div class="select-wrapper">
+            <div class="mb-3 input-group">
+              <select class='form-select' id='sence-select'>
+                <option value='0' selected>实时通话</option>
+                <option value='1'>互动直播</option>
+              </select>
+              <label class='input-group-text' for='sence-select'>场景</label>
+            </div>
+            <div class="mb-3 input-group">
+              <select class='form-select' id='role-select'>
+                <option value='0' selected>主播</option>
+                <option value='1'>观众</option>
+              </select>
+              <label class='input-group-text' for='role-select'>角色</label>
+            </div>
+          </div>
+          <div class="mb-3 input-group">
+            <div class="d-flex align-items-center gap-2">
+              <input type='checkbox' class='form-check-input' id='denoise-checkbox' checked>
+              <label class='form-check-label' for='denoise-checkbox'>AI denoise</label>
+            </div>
+          </div>
+          <div class="mb-3 input-group">
+            <select class='form-select' id='denoise-mode-select'>
+              <option value='0'>默认模式</option>
+              <option value='1' selected>远场模式</option>
+            </select>
+          </div>
         </div>
         <h1 style='font-size: 14px'>
           <span class='en'>Operation</span>
