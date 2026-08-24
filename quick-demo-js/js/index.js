@@ -369,6 +369,17 @@ async function stopShare() {
 	}
 }
 
+async function toggleRemoteAudioMute(userId, mute) {
+	if (!userId || !trtc) return;
+	try {
+		await trtc.muteRemoteAudio(userId, mute);
+		addSuccessLog(`[${userId}] muteRemoteAudio muted=${mute}`);
+	} catch (error) {
+		addFailedLog(`[${userId}] muteRemoteAudio failed. Reason: ${error.message || error}`);
+		throw error;
+	}
+}
+
 async function toggleBigStream(userId, streamType, elementId) {
 	if (!userId || !streamType || !elementId) return;
 	try {
@@ -442,10 +453,11 @@ async function initDevice() {
 }
 
 function handleEvent() {
-	trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
+	trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, async ({ userId, streamType }) => {
 		const elementId = `${userId}_${streamType}`;
 		addStreamView(elementId, userId, streamType);
-		trtc.startRemoteVideo({ userId, streamType, view: elementId });
+		await trtc.startRemoteVideo({ userId, streamType, view: elementId });
+		addRemoteMuteControl(elementId);
 		addSuccessLog(`${userId ? `[${userId}]` : ''} ${streamType} remoteVideoAvailable.`);
 		if (roleSelect.value === '1') {
 			console.log('switchRole to audience');

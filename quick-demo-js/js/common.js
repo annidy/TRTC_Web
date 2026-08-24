@@ -115,6 +115,39 @@ function addStreamView(remoteId, userId, streamType) {
 	}
 }
 
+function addRemoteMuteControl(remoteId) {
+	const remoteDiv = document.getElementById(remoteId);
+	if (!remoteDiv || remoteDiv.querySelector('.tag')) {
+		return;
+	}
+
+	const muted = remoteDiv.dataset.muted === 'true';
+	const tag = document.createElement('div');
+	tag.className = 'tag';
+	const audioDiv = document.createElement('div');
+	audioDiv.className = muted ? 'muteSpeaker' : 'unmuteSpeaker';
+	audioDiv.title = muted ? '取消静音' : '静音';
+	tag.appendChild(audioDiv);
+	remoteDiv.appendChild(tag);
+
+	audioDiv.addEventListener('click', async (e) => {
+		e.stopPropagation();
+		const uid = remoteDiv.dataset.userId;
+		if (!uid) return;
+		const isMuted = remoteDiv.dataset.muted === 'true';
+		const nextMuted = !isMuted;
+		try {
+			await window.toggleRemoteAudioMute?.(uid, nextMuted);
+			remoteDiv.dataset.muted = String(nextMuted);
+			audioDiv.className = nextMuted ? 'muteSpeaker' : 'unmuteSpeaker';
+			audioDiv.title = nextMuted ? '取消静音' : '静音';
+		} catch (err) {
+			console.warn('toggle remote mute failed', err);
+		}
+	});
+	audioDiv.addEventListener('dblclick', (e) => e.stopPropagation());
+}
+
 function removeStreamView(remoteId) {
 	const remoteDiv = document.getElementById(remoteId);
 	if (remoteDiv) {
